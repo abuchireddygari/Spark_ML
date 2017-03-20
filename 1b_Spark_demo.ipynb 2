@@ -1,0 +1,574 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": true,
+    "editable": true
+   },
+   "source": [
+    "# Spark demo : Part II #"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "<pyspark.context.SparkContext at 0x112a4bed0>"
+      ]
+     },
+     "execution_count": 1,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sc"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [],
+   "source": [
+    "import re\n",
+    "\n",
+    "def is_post_row(line):\n",
+    "    return re.match('  <row Id=', line) != None\n",
+    "\n",
+    "row_rdd = sc.textFile('./data/ai.stackexchange.com/Posts.xml') \\\n",
+    "    .filter(is_post_row)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<p>What does \"backprop\" mean? I've Googled it, but it's showing backpropagation.</p>\n",
+      "\n",
+      "<p>Is the \"backprop\" term basically the same as \"backpropagation\" or does it have a different meaning?</p>\n",
+      "\n",
+      "================================================================================\n",
+      "\n",
+      "<p>Does increasing the noise in data help to improve the learning ability of a network? Does it make any difference or does it depend on the problem being solved? How is it affect the generalization process overall?</p>\n",
+      "\n",
+      "================================================================================\n",
+      "\n",
+      "<p>When you're writing your algorithm, how do you know how many neurons you need per single layer? Are there any methods for finding the optimal number of them, or is it a rule of thumb?</p>\n",
+      "\n",
+      "================================================================================\n",
+      "\n",
+      "<p>I have a LEGO Mindstorms EV3 and I'm wondering if there's any way I could start coding the bot in Python rather than the default drag-and-drop system. Is a Mindstorm considered AI?</p>\n",
+      "\n",
+      "<p>Is this possible?</p>\n",
+      "\n",
+      "<hr>\n",
+      "\n",
+      "<p>My goal is to write a basic walking program in Python. The bot is the EV3RSTORM. I searched and found <a href=\"http://bitsandbricks.no/2014/01/19/getting-started-with-python-on-ev3/\" rel=\"nofollow\">this</a>, but don't understand it. </p>\n",
+      "\n",
+      "================================================================================\n",
+      "\n",
+      "<p>The intelligent agent definition of intelligence states that an agent is intelligent if it acts so to maximize the expected value of a performance measure based on past experience and knowledge. (paraphrased from <a href=\"http://en.wikipedia.org/wiki/Philosophy_of_artificial_intelligence#Intelligent_agent_definition\" rel=\"nofollow\">Wikipedia</a>)</p>\n",
+      "\n",
+      "<p>Does this mean that humans are not intelligent? I think we all make mistakes that imply that we are not maximizing the expected value of a performance measure.</p>\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "import HTMLParser\n",
+    "h = HTMLParser.HTMLParser()\n",
+    "\n",
+    "def is_first_post(line):\n",
+    "    return re.match('  <row Id=\"\\d+\" PostTypeId=\"1\"', line)\n",
+    "\n",
+    "def extract_body(line):\n",
+    "    matches = re.findall('Body=\"(.*?)\"', line)\n",
+    "    parsed_text = h.unescape(matches[0])\n",
+    "    return parsed_text\n",
+    "\n",
+    "questions = row_rdd \\\n",
+    "    .filter(is_first_post) \\\n",
+    "    .map(extract_body) \\\n",
+    "    .take(5)\n",
+    "    \n",
+    "print (\"\\n\"+(\"=\"*80)+\"\\n\\n\").join(questions)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(u'i', 2893)\n",
+      "(u'be', 2634)\n",
+      "(u'for', 2580)\n",
+      "(u'are', 2089)\n",
+      "(u'this', 2088)\n",
+      "(u'ai', 1978)\n",
+      "(u'you', 1970)\n",
+      "(u'li', 1922)\n",
+      "(u'href', 1913)\n",
+      "(u'as', 1899)\n",
+      "(u'em', 1897)\n",
+      "(u'can', 1848)\n",
+      "(u'or', 1641)\n",
+      "(u'on', 1580)\n",
+      "(u'rel', 1540)\n",
+      "(u'with', 1521)\n",
+      "(u'an', 1521)\n",
+      "(u'not', 1482)\n",
+      "(u'nofollow', 1464)\n",
+      "(u's', 1417)\n",
+      "(u'if', 1373)\n",
+      "(u'strong', 1349)\n",
+      "(u'have', 1318)\n",
+      "(u'but', 1306)\n",
+      "(u'https', 1266)\n",
+      "(u'we', 1254)\n",
+      "(u'by', 1156)\n",
+      "(u'would', 1155)\n",
+      "(u'which', 1147)\n",
+      "(u'what', 1064)\n",
+      "(u'there', 1027)\n",
+      "(u't', 1025)\n",
+      "(u'from', 937)\n",
+      "(u'will', 927)\n",
+      "(u'some', 917)\n",
+      "(u'so', 902)\n",
+      "(u'one', 893)\n",
+      "(u'com', 885)\n",
+      "(u'http', 878)\n",
+      "(u'org', 866)\n"
+     ]
+    }
+   ],
+   "source": [
+    "word_counts = row_rdd \\\n",
+    "    .map(extract_body) \\\n",
+    "    .flatMap(lambda line: [word.lower() for word in re.findall('\\w+', line)]) \\\n",
+    "    .map(lambda word: (word, 1)) \\\n",
+    "    .reduceByKey(lambda x, y: x+y) \\\n",
+    "    .map(lambda (word, count): (count, word)) \\\n",
+    "    .sortByKey(ascending=False) \\\n",
+    "    .map(lambda (count, word): (word, count)) \\\n",
+    "    .take(50)\n",
+    "    \n",
+    "for wc in word_counts[10:]:\n",
+    "    print wc"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(0, 383),\n",
+       " (1, 146),\n",
+       " (2, 41),\n",
+       " (3, 19),\n",
+       " (4, 6),\n",
+       " (5, 3),\n",
+       " (6, 2),\n",
+       " (7, 2),\n",
+       " (8, 1),\n",
+       " (42, 1)]"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "def extract_favorite_count(row):\n",
+    "    matches = re.findall('FavoriteCount=\"(\\d+)\"', row)\n",
+    "    if len(matches) > 0:\n",
+    "        return int(matches[0])\n",
+    "    else:\n",
+    "        return 0\n",
+    "\n",
+    "row_rdd \\\n",
+    "    .filter(is_first_post) \\\n",
+    "    .map(extract_favorite_count) \\\n",
+    "    .map(lambda x: (x,1)) \\\n",
+    "    .reduceByKey(lambda x,y: x+y) \\\n",
+    "    .sortByKey(ascending=True) \\\n",
+    "    .collect()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "PythonRDD[45] at RDD at PythonRDD.scala:48"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "def get_rdd_word_count(rdd):\n",
+    "    return rdd \\\n",
+    "        .map(extract_body) \\\n",
+    "        .flatMap(lambda line: [word.lower() for word in re.findall('\\w+', line)]) \\\n",
+    "        .map(lambda word: (word, 1)) \\\n",
+    "        .reduceByKey(lambda x, y: x+y) \\\n",
+    "        .map(lambda (word, count): (count, word)) \\\n",
+    "        .sortByKey(ascending=False) \\\n",
+    "        .map(lambda (count, word): (word, count)) \\\n",
+    "\n",
+    "word_counts_from_favorited_posts = get_rdd_word_count(\n",
+    "    row_rdd \\\n",
+    "        .filter(is_first_post) \\\n",
+    "        .filter(lambda x: extract_favorite_count(x)>0)\n",
+    ")\n",
+    "\n",
+    "word_counts_from_nonfavorited_posts = get_rdd_word_count(\n",
+    "    row_rdd \\\n",
+    "        .filter(is_first_post) \\\n",
+    "        .filter(lambda x: extract_favorite_count(x)==0)\n",
+    ")\n",
+    "\n",
+    "word_counts_from_favorited_posts\n",
+    "word_counts_from_nonfavorited_posts"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(u'p', 1419),\n",
+       " (u'the', 993),\n",
+       " (u'a', 886),\n",
+       " (u'to', 674),\n",
+       " (u'of', 557),\n",
+       " (u'i', 480),\n",
+       " (u'and', 451),\n",
+       " (u'is', 432),\n",
+       " (u'in', 361),\n",
+       " (u'it', 332)]"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "word_counts_from_favorited_posts.take(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true,
+    "scrolled": false
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "27588\n",
+      "51468\n"
+     ]
+    }
+   ],
+   "source": [
+    "total_words_from_favorited_posts = word_counts_from_favorited_posts \\\n",
+    "    .map(lambda x: x[1]) \\\n",
+    "    .reduce(lambda x, y: x+y)\n",
+    "\n",
+    "total_words_from_nonfavorited_posts = word_counts_from_nonfavorited_posts \\\n",
+    "    .map(lambda x: x[1]) \\\n",
+    "    .reduce(lambda x, y: x+y)\n",
+    "    \n",
+    "print total_words_from_favorited_posts\n",
+    "print total_words_from_nonfavorited_posts"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(u'p', -2.967428497391139),\n",
+       " (u'the', -3.3244055105060086),\n",
+       " (u'a', -3.4384192239461004),\n",
+       " (u'to', -3.7119060636388745),\n",
+       " (u'of', -3.9025709346238973),\n",
+       " (u'i', -4.051350070649245),\n",
+       " (u'and', -4.113668835048503),\n",
+       " (u'is', -4.156710586307071),\n",
+       " (u'in', -4.336258216218301),\n",
+       " (u'it', -4.420001205634693)]"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from math import log\n",
+    "log_freq_from_favorite_posts = word_counts_from_favorited_posts.map(lambda x: (x[0], log(x[1]) - log(total_words_from_favorited_posts)))\n",
+    "log_freq_from_nonfavorite_posts = word_counts_from_nonfavorited_posts.map(lambda x: (x[0], log(x[1]) - log(total_words_from_nonfavorited_posts)))\n",
+    "log_freq_from_favorite_posts.take(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(2.7030209014335362, u'sentient'),\n",
+       " (2.4153388289817546, u'quantum'),\n",
+       " (2.4153388289817546, u'mechanics'),\n",
+       " (2.4153388289817546, u'situations'),\n",
+       " (2.4153388289817546, u'thoughts'),\n",
+       " (2.4153388289817546, u'app'),\n",
+       " (2.4153388289817546, u'z'),\n",
+       " (2.2330172721877997, u'symptoms'),\n",
+       " (2.2330172721877997, u'reach'),\n",
+       " (2.2330172721877997, u'subjective'),\n",
+       " (2.2330172721877997, u'realize'),\n",
+       " (2.2330172721877997, u'leading'),\n",
+       " (2.2330172721877997, u'emergence'),\n",
+       " (2.2330172721877997, u'beta'),\n",
+       " (2.2330172721877997, u'animal'),\n",
+       " (2.2330172721877997, u'honda'),\n",
+       " (2.2330172721877997, u'unable'),\n",
+       " (2.2330172721877997, u'hyper'),\n",
+       " (2.1276567565299747, u'iq'),\n",
+       " (2.1276567565299747, u'heuristics')]"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "most_favorited_words = log_freq_from_favorite_posts \\\n",
+    "    .join(log_freq_from_nonfavorite_posts) \\\n",
+    "    .map(lambda x: (x[0], x[1][0] - x[1][1])) \\\n",
+    "    .map(lambda (word, log_diff): (log_diff, word)) \\\n",
+    "    .sortByKey(ascending=False) \\\n",
+    "    .take(20)\n",
+    "\n",
+    "most_favorited_words"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "collapsed": true,
+    "deletable": true,
+    "editable": true
+   },
+   "source": [
+    "### Exercise 1 ###\n",
+    "\n",
+    "What are the 20 most common words in each of these sets?\n",
+    "- Write an RDD to generate counts for all the words that are at least 5 characters long.\n",
+    "- Filter this RDD to only include favorited posts.\n",
+    "- Filter this RDD to only include posts *without* any favorites.\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": true,
+    "editable": true
+   },
+   "source": [
+    "### Exercise 2 ###\n",
+    "\n",
+    "The logic above creates two separate RDDs for posts with and without favorites, then joins them.\n",
+    "\n",
+    "There's another way to accomplish the same thing in a single RDD. Hint: you'll need a tuple with (word, count, has_favorites)\n",
+    "\n",
+    "Generate word counts for favorited posts and non-favorited posts."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "deletable": true,
+    "editable": true
+   },
+   "source": [
+    "### Bonus Exercise ###\n",
+    "\n",
+    "Which post in this data set has the most favorites?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "metadata": {
+    "collapsed": false,
+    "deletable": true,
+    "editable": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "[(u'backprop', 1),\n",
+       " (u'googled', 1),\n",
+       " (u'showing', 1),\n",
+       " (u'backpropagation', 1),\n",
+       " (u'backprop', 1),\n",
+       " (u'basically', 1),\n",
+       " (u'backpropagation', 1),\n",
+       " (u'different', 1),\n",
+       " (u'meaning', 1),\n",
+       " (u'increasing', 1),\n",
+       " (u'noise', 1),\n",
+       " (u'improve', 1),\n",
+       " (u'learning', 1),\n",
+       " (u'ability', 1),\n",
+       " (u'network', 1),\n",
+       " (u'difference', 1),\n",
+       " (u'depend', 1),\n",
+       " (u'problem', 1),\n",
+       " (u'being', 1),\n",
+       " (u'solved', 1)]"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "def five_char_line(line):\n",
+    "    if(len(line)>=5):\n",
+    "        return line\n",
+    "    else:\n",
+    "        return None\n",
+    "\n",
+    "\n",
+    "row_rdd \\\n",
+    "    .map(extract_body) \\\n",
+    "    .flatMap(lambda line: [word.lower() for word in re.findall('\\w+', line)]) \\\n",
+    "    .filter(five_char_line)\\\n",
+    "    .map(lambda word: (word, 1))\\\n",
+    "    .take(20)\n",
+    "    \n",
+    "row_rdd\\\n",
+    "    \n",
+    "    \n",
+    "    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 2",
+   "language": "python",
+   "name": "python2"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 2
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython2",
+   "version": "2.7.13"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
